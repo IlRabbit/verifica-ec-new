@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Verifica calcoli · Economia Circolare</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#1E6A39">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Verifica EC">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F4F7F3; --surface:#FFFFFF; --ink:#16201A; --muted:#5A675E; --line:#D3DDD5;
+  --accent:#1E6A39; --accent-ink:#FFFFFF; --accent-soft:#E1EFE4;
+  --ko:#B3261E; --ko-soft:#FBE8E6; --warn:#8A5300; --warn-soft:#FFF1D6;
+  --sans:"Atkinson Hyperlegible", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1410; --surface:#162019; --ink:#E5EEE7; --muted:#9BAAA0; --line:#29362D;
+    --accent:#6DC28B; --accent-ink:#0E1410; --accent-soft:#1B3223;
+    --ko:#FF8F86; --ko-soft:#3A1B19; --warn:#F2B75B; --warn-soft:#352812; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1410; --surface:#162019; --ink:#E5EEE7; --muted:#9BAAA0; --line:#29362D;
+  --accent:#6DC28B; --accent-ink:#0E1410; --accent-soft:#1B3223;
+  --ko:#FF8F86; --ko-soft:#3A1B19; --warn:#F2B75B; --warn-soft:#352812; color-scheme:dark;
+}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 64px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.45;-webkit-text-size-adjust:100%}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+.top{padding:20px 18px 6px;max-width:640px;margin:0 auto;display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.top h1{margin:0;font-size:1.65rem;line-height:1.1;letter-spacing:-.01em}
+.top p{margin:4px 0 0;color:var(--muted);font-size:.9rem}
+.mode{flex:none;border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;font-weight:700;font-size:.9rem;cursor:pointer}
+.mode[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+.fogli{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.fogli-in{max-width:640px;margin:0 auto;display:flex;gap:8px;overflow-x:auto;padding:12px 18px;scrollbar-width:none}
+.fogli-in::-webkit-scrollbar{display:none}
+.fogli button{flex:none;border:1.5px solid var(--line);background:var(--surface);border-radius:12px;padding:8px 12px;cursor:pointer;text-align:left}
+.fogli button b{display:block;font-size:.95rem}
+.fogli button small{display:block;font-family:var(--mono);font-size:.68rem;color:var(--muted)}
+.fogli button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.fogli button[aria-selected="true"] small{color:inherit;opacity:.8}
+
+main{max-width:640px;margin:0 auto;padding:14px 14px 40px}
+details.item{background:var(--surface);border:1px solid var(--line);border-radius:16px;margin-bottom:12px;overflow:hidden}
+details.item>summary{list-style:none;cursor:pointer;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+details.item>summary::-webkit-details-marker{display:none}
+summary .t{font-weight:700;font-size:1.05rem}
+summary .c{display:block;font-family:var(--mono);font-size:.7rem;color:var(--muted);word-break:break-all;margin-top:2px}
+summary .chev{flex:none;width:28px;height:28px;border-radius:50%;background:var(--accent-soft);display:grid;place-items:center;transition:transform .2s}
+details[open] summary .chev{transform:rotate(90deg)}
+.body{padding:0 18px 18px}
+.note{margin:0 0 14px;color:var(--muted);font-size:.92rem}
+
+.field{display:block;margin-bottom:12px}
+.field>span{display:block;font-size:.88rem;font-weight:700;margin-bottom:4px}
+.money{position:relative}
+.money input{width:100%;min-width:0;font-size:1.1rem;padding:11px 36px 11px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg);font-variant-numeric:tabular-nums}
+.money::after{content:"€";position:absolute;right:13px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.money.plain::after{content:""}
+.money input.bad{border-color:var(--ko);background:var(--ko-soft)}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg label{flex:1 1 auto}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg span{display:block;text-align:center;border:1.5px solid var(--line);border-radius:10px;padding:10px 8px;cursor:pointer;font-weight:700;font-size:.92rem}
+.seg input:checked+span{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.seg input:focus-visible+span{outline:3px solid var(--accent);outline-offset:2px}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 10px}
+
+.slip{margin-top:16px;border-top:2px dashed var(--line);padding-top:6px}
+.res{padding:12px 0;border-bottom:1px solid var(--line)}
+.res:last-child{border-bottom:0}
+.res-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.res-label{font-size:.9rem;color:var(--muted)}
+.res-val{font-size:1.45rem;font-weight:700;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.res.main .res-head{flex-wrap:wrap}.res.main .res-val{font-size:clamp(1.5rem,7vw,1.9rem);margin-left:auto;color:var(--accent)}
+.cmp{display:flex;align-items:center;gap:8px;margin-top:8px}
+.cmp input{flex:1;min-width:0;font-size:1rem;padding:8px 10px;border:1.5px dashed var(--line);border-radius:8px;background:transparent;font-variant-numeric:tabular-nums}
+.stamp{flex:none;font-size:.8rem;font-weight:700;padding:5px 9px;border-radius:999px;display:none}
+.stamp.ok{display:inline-block;background:var(--accent-soft);color:var(--accent)}
+.stamp.ko{display:inline-block;background:var(--ko-soft);color:var(--ko)}
+.msg{margin-top:12px;padding:11px 13px;border-radius:10px;font-weight:700;font-size:.93rem}
+.msg.ok{background:var(--accent-soft);color:var(--accent)}
+.msg.ko{background:var(--ko-soft);color:var(--ko)}
+.msg.warn{background:var(--warn-soft);color:var(--warn)}
+.msg.idle{background:var(--bg);color:var(--muted);font-weight:400}
+.actions{display:flex;justify-content:space-between;align-items:center;margin-top:14px;gap:10px}
+.link{background:none;border:0;padding:6px 0;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:.9rem}
+details.src{margin-top:10px}
+details.src summary{cursor:pointer;color:var(--muted);font-size:.88rem}
+pre{font-family:var(--mono);font-size:.74rem;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;overflow-x:auto;margin:8px 0 0;line-height:1.5}
+
+#editor{max-width:640px;margin:0 auto;padding:14px 14px 40px}
+#editor h2{font-size:1.2rem;margin:0 0 4px}
+#editor .lead{color:var(--muted);margin:0 0 12px;font-size:.92rem}
+textarea{width:100%;min-height:58vh;font-family:var(--mono);font-size:13px;line-height:1.55;padding:12px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);resize:vertical;white-space:pre;overflow-x:auto;tab-size:2}
+.status{margin:10px 0;padding:11px 13px;border-radius:10px;font-size:.92rem}
+.status.ok{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.status.ko{background:var(--ko-soft);color:var(--ko)}
+.status.ko ul{margin:6px 0 0;padding-left:18px}
+.status code{font-family:var(--mono);font-size:.85em}
+.btn{border:0;border-radius:10px;padding:11px 16px;font-weight:700;cursor:pointer;background:var(--ink);color:var(--bg)}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.cheat{margin-top:18px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div>
+    <h1 id="title">Verifica calcoli</h1>
+    <p>Rendicontazione FO, bando RLO12024042243</p>
+  </div>
+  <button class="mode" id="mode" aria-pressed="false">Definizioni</button>
+</header>
+<nav class="fogli" aria-label="Fogli"><div class="fogli-in" id="fogli" role="tablist"></div></nav>
+<main id="items"></main>
+<section id="editor" hidden>
+  <h2>Definizioni degli item</h2>
+  <p class="lead">Gli item sono scritti nel linguaggio "Rendi". Ogni modifica viene controllata mentre scrivi: se è corretta, l'app si aggiorna subito e la salva su questo telefono.</p>
+  <div class="status" id="status"></div>
+  <textarea id="src" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="Codice delle definizioni"></textarea>
+  <div class="row" style="margin-top:10px">
+    <button class="btn ghost" id="reset">Ripristina le definizioni originali</button>
+  </div>
+  <details class="src cheat">
+    <summary>Come si scrive un item</summary>
+<pre>foglio "Nome del foglio" "Codice foglio"
+
+item "Titolo" Codice_Item
+  nota "Testo di aiuto"
+  euro x "Etichetta"          # campo in euro
+  numero n "Etichetta"        # campo numerico
+  scelta s "Etichetta" ["A", "B"]
+  tmp = x * 7%                # valore intermedio
+  risultato euro r "Etichetta" = min(tmp, 100)
+  risultato perc p "Etichetta" = x / n * 100
+  verifica "ok" | "errore" : r &lt;= x
+  avviso "se vero" | "se falso" : s == "A"
+
+Funzioni: se(cond, a, b), min, max, abs, arrotonda(x, cifre)
+Condizioni: == != &lt; &lt;= &gt; &gt;= and or not</pre>
+  </details>
+</section>
+<script>
+// ===== Linguaggio "Rendi": motore =====
+const FUNCS = { min: [2, 20], max: [2, 20], se: [3, 3], abs: [1, 1], arrotonda: [1, 2] };
+const KEYWORDS = new Set(['bando','foglio','item','nota','euro','numero','scelta','risultato','verifica','avviso','and','or','not', ...Object.keys(FUNCS)]);
+const BIN = { or: 1, and: 2, '==': 4, '!=': 4, '<': 4, '<=': 4, '>': 4, '>=': 4, '+': 5, '-': 5, '*': 6, '/': 6 };
+const err = (line, msg) => ({ line, msg, dsl: true });
+
+function tokenize(s, ln) {
+  const out = []; let i = 0;
+  while (i < s.length) {
+    const c = s[i];
+    if (c === ' ' || c === '\t' || c === '\r') { i++; continue; }
+    if (c === '#') break;
+    if (c === '"') {
+      const j = s.indexOf('"', i + 1);
+      if (j < 0) throw err(ln, 'Stringa non chiusa: manca la virgoletta finale');
+      out.push({ t: 'str', v: s.slice(i + 1, j) }); i = j + 1; continue;
+    }
+    const rest = s.slice(i); let m;
+    if ((m = rest.match(/^\d+(?:\.\d+)?/))) { out.push({ t: 'num', v: parseFloat(m[0]) }); i += m[0].length; continue; }
+    if ((m = rest.match(/^[A-Za-zÀ-ÿ_][\wÀ-ÿ.]*/))) { out.push({ t: 'id', v: m[0] }); i += m[0].length; continue; }
+    if ((m = rest.match(/^(==|!=|<=|>=|[<>+\-*\/%(),\[\]=|:])/))) { out.push({ t: 'op', v: m[0] }); i += m[0].length; continue; }
+    throw err(ln, `Carattere non valido: ${c}`);
+  }
+  return out;
+}
+
+const peekOp = (P, v) => { const t = P.toks[P.i]; return t && t.t === 'op' && t.v === v; };
+const eatOp = (P, v) => { if (peekOp(P, v)) { P.i++; return true; } return false; };
+const op = (P, v) => { if (!eatOp(P, v)) throw err(P.ln, `Mi aspettavo "${v}"`); };
+const str = (P) => { const t = P.toks[P.i++]; if (!t || t.t !== 'str') throw err(P.ln, 'Mi aspettavo un testo tra virgolette'); return t.v; };
+const ident = (P) => { const t = P.toks[P.i++]; if (!t || t.t !== 'id') throw err(P.ln, 'Mi aspettavo un nome'); return t.v; };
+const end = (P) => { const t = P.toks[P.i]; if (t) throw err(P.ln, `Testo in più alla fine della riga: ${t.t === 'str' ? '"' + t.v + '"' : t.v}`); };
+
+function expr(P, minBp) {
+  let left = prefix(P);
+  for (;;) {
+    const t = P.toks[P.i]; if (!t) break;
+    if (t.t === 'op' && t.v === '%') { P.i++; left = { k: 'pct', a: left }; continue; }
+    const key = t.t === 'op' ? t.v : (t.t === 'id' && (t.v === 'and' || t.v === 'or') ? t.v : null);
+    if (!key || !(key in BIN)) break;
+    const bp = BIN[key]; if (bp <= minBp) break;
+    P.i++; left = { k: 'bin', op: key, a: left, b: expr(P, bp) };
+  }
+  return left;
+}
+function prefix(P) {
+  const t = P.toks[P.i++];
+  if (!t) throw err(P.ln, 'Espressione incompleta');
+  if (t.t === 'num') return { k: 'num', v: t.v };
+  if (t.t === 'str') return { k: 'str', v: t.v };
+  if (t.t === 'op' && t.v === '(') { const e = expr(P, 0); op(P, ')'); return e; }
+  if (t.t === 'op' && t.v === '-') return { k: 'neg', a: expr(P, 7) };
+  if (t.t === 'id' && t.v === 'not') return { k: 'not', a: expr(P, 3) };
+  if (t.t === 'id' && t.v !== 'and' && t.v !== 'or') {
+    if (eatOp(P, '(')) {
+      const args = [];
+      if (!peekOp(P, ')')) { do { args.push(expr(P, 0)); } while (eatOp(P, ',')); }
+      op(P, ')');
+      return { k: 'call', f: t.v, args };
+    }
+    return { k: 'var', v: t.v };
+  }
+  throw err(P.ln, `Simbolo inatteso: ${t.v}`);
+}
+
+function typeOf(a, scope, ln) {
+  const need = (x, ty, what) => { const t = typeOf(x, scope, ln); if (t !== ty) throw err(ln, what); return t; };
+  switch (a.k) {
+    case 'num': return 'num';
+    case 'str': return 'str';
+    case 'var': { const s = scope.get(a.v); if (!s) throw err(ln, `"${a.v}" non è definito: va dichiarato prima di usarlo`); return s.type; }
+    case 'pct': need(a.a, 'num', 'Il simbolo % va dopo un numero'); return 'num';
+    case 'neg': need(a.a, 'num', 'Il segno meno va davanti a un numero'); return 'num';
+    case 'not': need(a.a, 'bool', '"not" va davanti a una condizione'); return 'bool';
+    case 'call': {
+      const f = FUNCS[a.f]; if (!f) throw err(ln, `Funzione sconosciuta: ${a.f} (disponibili: ${Object.keys(FUNCS).join(', ')})`);
+      if (a.args.length < f[0] || a.args.length > f[1]) throw err(ln, `${a.f} vuole ${f[0] === f[1] ? f[0] : f[0] + '–' + f[1]} argomenti, ne ha ${a.args.length}`);
+      if (a.f === 'se') {
+        need(a.args[0], 'bool', 'Il primo argomento di se() deve essere una condizione');
+        const t1 = typeOf(a.args[1], scope, ln), t2 = typeOf(a.args[2], scope, ln);
+        if (t1 !== t2) throw err(ln, 'I due esiti di se() devono essere dello stesso tipo');
+        return t1;
+      }
+      a.args.forEach(x => need(x, 'num', `Gli argomenti di ${a.f}() devono essere numeri`));
+      return 'num';
+    }
+    case 'bin': {
+      const ta = typeOf(a.a, scope, ln), tb = typeOf(a.b, scope, ln);
+      if ('+-*/'.includes(a.op)) { if (ta !== 'num' || tb !== 'num') throw err(ln, `L'operatore ${a.op} vuole due numeri`); return 'num'; }
+      if (['<', '<=', '>', '>='].includes(a.op)) { if (ta !== 'num' || tb !== 'num') throw err(ln, `Il confronto ${a.op} vuole due numeri`); return 'bool'; }
+      if (a.op === 'and' || a.op === 'or') { if (ta !== 'bool' || tb !== 'bool') throw err(ln, `"${a.op}" unisce due condizioni`); return 'bool'; }
+      if (ta !== tb) throw err(ln, `Non puoi confrontare con ${a.op} valori di tipo diverso`);
+      for (const [x, y] of [[a.a, a.b], [a.b, a.a]]) {
+        if (x.k === 'var' && y.k === 'str') {
+          const s = scope.get(x.v);
+          if (s.options && !s.options.includes(y.v)) throw err(ln, `"${y.v}" non è un'opzione di ${x.v}. Opzioni: ${s.options.map(o => '"' + o + '"').join(', ')}`);
+        }
+      }
+      return 'bool';
+    }
+  }
+}
+
+function ev(a, env) {
+  switch (a.k) {
+    case 'num': case 'str': return a.v;
+    case 'var': return env[a.v];
+    case 'pct': return ev(a.a, env) / 100;
+    case 'neg': return -ev(a.a, env);
+    case 'not': return !ev(a.a, env);
+    case 'call': {
+      if (a.f === 'se') return ev(a.args[0], env) ? ev(a.args[1], env) : ev(a.args[2], env);
+      const v = a.args.map(x => ev(x, env));
+      if (a.f === 'min') return Math.min(...v);
+      if (a.f === 'max') return Math.max(...v);
+      if (a.f === 'abs') return Math.abs(v[0]);
+      if (a.f === 'arrotonda') { const f = 10 ** (v[1] || 0); return Math.round((v[0] + Math.sign(v[0]) * 1e-9) * f) / f; }
+      return NaN;
+    }
+    case 'bin': {
+      const x = ev(a.a, env), y = ev(a.b, env);
+      switch (a.op) {
+        case '+': return x + y; case '-': return x - y; case '*': return x * y;
+        case '/': return y === 0 ? NaN : x / y;
+        case '<': return x < y; case '<=': return x <= y + 1e-9; case '>': return x > y + 1e-9; case '>=': return x >= y;
+        case '==': return typeof x === 'number' ? Math.abs(x - y) < 1e-6 : x === y;
+        case '!=': return typeof x === 'number' ? Math.abs(x - y) >= 1e-6 : x !== y;
+        case 'and': return x && y; case 'or': return x || y;
+      }
+    }
+  }
+}
+
+function parseProgram(src) {
+  const prog = { title: '', fogli: [] }; const errors = [];
+  let foglio = null, item = null;
+  src.split('\n').forEach((raw, idx) => {
+    const ln = idx + 1;
+    try {
+      const toks = tokenize(raw, ln); if (!toks.length) { if (item && raw.trim().startsWith('#')) item.src.push(raw); return; }
+      const P = { toks, i: 1, ln }; const kw = toks[0];
+      if (kw.t !== 'id') throw err(ln, 'La riga deve iniziare con una parola chiave o un nome');
+      if (kw.v === 'bando') { prog.title = str(P); end(P); return; }
+      if (kw.v === 'foglio') {
+        const name = str(P); const code = P.toks[P.i] ? str(P) : ''; end(P);
+        foglio = { name, code, items: [] }; prog.fogli.push(foglio); item = null; return;
+      }
+      if (kw.v === 'item') {
+        if (!foglio) throw err(ln, 'Un item deve stare dentro un foglio');
+        const title = str(P); const code = P.toks[P.i] ? ident(P) : ''; end(P);
+        item = { title, code, notes: [], inputs: [], steps: [], scope: new Map(), src: [raw.trim()] };
+        foglio.items.push(item); return;
+      }
+      if (!item) throw err(ln, 'Istruzione fuori da un item');
+      item.src.push(raw);
+      itemLine(kw.v, P, item);
+    } catch (e) {
+      errors.push(e && e.dsl ? e : { line: ln, msg: 'Errore interno: ' + (e && e.message) });
+    }
+  });
+  if (!errors.length) {
+    if (!prog.fogli.length) errors.push({ line: 1, msg: 'Nessun foglio definito' });
+    prog.fogli.forEach(f => { if (!f.items.length) errors.push({ line: 0, msg: `Il foglio "${f.name}" non ha item` }); });
+  }
+  return { prog, errors };
+}
+
+function itemLine(kw, P, item) {
+  const ln = P.ln;
+  const declare = (id, info) => {
+    if (KEYWORDS.has(id)) throw err(ln, `"${id}" è una parola riservata`);
+    if (item.scope.has(id)) throw err(ln, `"${id}" è già definito in questo item`);
+    item.scope.set(id, info);
+  };
+  switch (kw) {
+    case 'nota': item.notes.push(str(P)); break;
+    case 'euro': case 'numero': {
+      const id = ident(P), label = str(P); declare(id, { type: 'num' }); item.inputs.push({ kind: kw, id, label }); break;
+    }
+    case 'scelta': {
+      const id = ident(P), label = str(P); op(P, '[');
+      const opts = [str(P)]; while (eatOp(P, ',')) opts.push(str(P)); op(P, ']');
+      if (new Set(opts).size !== opts.length) throw err(ln, 'Opzioni ripetute');
+      declare(id, { type: 'str', options: opts }); item.inputs.push({ kind: 'scelta', id, label, options: opts }); break;
+    }
+    case 'risultato': {
+      const ty = ident(P);
+      if (!['euro', 'perc', 'numero'].includes(ty)) throw err(ln, `Tipo di risultato "${ty}" non valido: usa euro, perc o numero`);
+      const id = ident(P), label = str(P); op(P, '=');
+      const ast = expr(P, 0);
+      if (typeOf(ast, item.scope, ln) !== 'num') throw err(ln, 'Un risultato deve essere un numero');
+      declare(id, { type: 'num' }); item.steps.push({ kind: 'result', ty, id, label, ast }); break;
+    }
+    case 'verifica': {
+      const ok = str(P); op(P, '|'); const ko = str(P); op(P, ':');
+      const ast = expr(P, 0);
+      if (typeOf(ast, item.scope, ln) !== 'bool') throw err(ln, 'La verifica vuole una condizione (vera o falsa)');
+      item.steps.push({ kind: 'check', ok, ko, ast }); break;
+    }
+    case 'avviso': {
+      const yes = str(P); const no = eatOp(P, '|') ? str(P) : 'Nessun avviso atteso'; op(P, ':');
+      const ast = expr(P, 0);
+      if (typeOf(ast, item.scope, ln) !== 'bool') throw err(ln, "L'avviso vuole una condizione (vera o falsa)");
+      item.steps.push({ kind: 'warn', yes, no, ast }); break;
+    }
+    default: {
+      if (!eatOp(P, '=')) throw err(ln, `Istruzione sconosciuta: "${kw}"`);
+      const ast = expr(P, 0); const t = typeOf(ast, item.scope, ln);
+      declare(kw, { type: t }); item.steps.push({ kind: 'var', id: kw, ast });
+    }
+  }
+  end(P);
+}
+
+function runItem(item, values) {
+  const env = {};
+  for (const inp of item.inputs) env[inp.id] = values[inp.id];
+  const out = [];
+  for (const s of item.steps) {
+    const v = ev(s.ast, env);
+    if (s.kind === 'var' || s.kind === 'result') env[s.id] = v;
+    out.push(v);
+  }
+  return out;
+}
+
+if (typeof module !== 'undefined') module.exports = { parseProgram, runItem };
+
+const ORIGINAL = "bando \"Economia Circolare\"\n# Rendicontazione FO, bando RLO12024042243\n\nfoglio \"Giustificativi di spesa\" \"SM-Giustificativi\"\n\nitem \"Importo imputato massimo\" RendFO_Giustificativi.ImportoImputato\n  nota \"Con IVA recuperabile = Sì il tetto è l'imponibile, altrimenti l'importo totale del documento.\"\n  scelta iva \"IVA recuperabile?\" [\"Sì\", \"No\"]\n  euro documento \"Importo totale del documento\"\n  euro imponibile \"di cui importo imponibile\"\n  euro imputato \"Importo imputato (somma delle voci)\"\n  risultato euro tetto \"Massimo imputabile\" = se(iva == \"Sì\", imponibile, documento)\n  risultato euro margine \"Margine residuo\" = tetto - imputato\n  verifica \"Importo entro il limite: nessun errore atteso\" | \"Errore atteso: l'importo imputato supera il limite\" : imputato <= tetto\n\nitem \"Totale quietanzato\" RendFO_Giustificativi.TotQuietanzato\n  nota \"Somma degli importi delle quietanze del giustificativo. Deve coincidere con l'importo del documento.\"\n  euro documento \"Importo totale del documento\"\n  euro q1 \"Quietanza 1\"\n  euro q2 \"Quietanza 2\"\n  euro q3 \"Quietanza 3\"\n  risultato euro totale \"Totale quietanzato\" = q1 + q2 + q3\n  risultato euro differenza \"Differenza dal documento\" = documento - totale\n  verifica \"Totale uguale al documento: nessun errore atteso\" | \"Errore atteso: totale quietanzato diverso dall'importo del documento\" : totale == documento\n\nfoglio \"Sintesi voci partner\" \"SSM-Sintesi voci partner\"\n\nitem \"Voce j) forfettaria\" RendFO_Soggetti.Voci.SpesaImputata\n  nota \"Si precarica solo se Calcolo forfettaria = Sì, cioè se la voce j) era valorizzata in adesione. Con solo Gber la voce non è nel quadro economico.\"\n  scelta regime \"Regime di aiuto del partner\" [\"Gber e De minimis\", \"Solo De minimis\"]\n  euro a \"Voce a) Consulenza\"\n  euro b \"Voce b)\"\n  euro c \"Voce c)\"\n  euro d \"Voce d)\"\n  euro e \"Voce e)\"\n  euro f \"Voce f)\"\n  euro g \"Voce g)\"\n  euro h \"Voce h)\"\n  euro i \"Voce i)\"\n  risultato euro base \"Base di calcolo\" = se(regime == \"Solo De minimis\", a + b + c + d + e + f + g + h + i, a + c + d + e + f + g + h + i)\n  risultato euro j \"Voce j) forfettaria (7%)\" = 7% * base\n\nfoglio \"Sintesi partner\" \"SM-Partner\"\n\nitem \"Percentuale di realizzazione\" RendFO_Soggetti.PercentImputato\n  nota \"Spesa imputata su costo ammesso attuale, per 100. Non va arrotondata.\"\n  euro spesa \"Spesa imputata\"\n  euro costo \"Costo ammesso attuale\"\n  risultato perc perc \"Percentuale di realizzazione\" = spesa / costo * 100\n\nitem \"Agevolazione ricalcolata\" RendFO_Soggetti.AgevolazioneRicalcolata\n  nota \"Gber: 45% se media impresa, 55% se micro o piccola. De minimis: 60%. Ogni quota ha come tetto il concesso attuale. Con un solo regime lascia vuoti i campi dell'altro.\"\n  scelta dimensione \"Dimensione d'impresa\" [\"Micro / piccola\", \"Media\"]\n  euro gberImputato \"Spesa imputata Gber\"\n  euro gberConcesso \"Gber concesso attuale\"\n  euro demImputato \"Spesa imputata De minimis\"\n  euro demConcesso \"De minimis concesso attuale\"\n  aliquota = se(dimensione == \"Media\", 45%, 55%)\n  risultato euro gber \"di cui Gber\" = min(aliquota * gberImputato, gberConcesso)\n  risultato euro dem \"di cui De minimis\" = min(60% * demImputato, demConcesso)\n  risultato euro totale \"Agevolazione ricalcolata\" = gber + dem\n  avviso \"Modulo Antimafia obbligatorio (oltre 150.000 €)\" | \"Modulo Antimafia non richiesto\" : totale > 150000\n\nfoglio \"Sintesi progetto\" \"M-Sintesi\"\n\nitem \"Percentuale di realizzazione\" RendFO_PercentImputato\n  nota \"Spesa imputata su costo ammesso attuale del progetto, per 100. Non va arrotondata.\"\n  euro spesa \"Spesa imputata\"\n  euro costo \"Costo ammesso attuale\"\n  risultato perc perc \"Percentuale di realizzazione\" = spesa / costo * 100\n\nitem \"Limite voce a) Consulenza\" RendFO_Avviso_ImportoVoceA1\n  nota \"L'avviso compare se la voce a) supera il 25% della somma delle voci da b) a i). Stessa regola in Richiesta saldo.\"\n  euro a \"Voce a) Consulenza\"\n  euro b \"Voce b)\"\n  euro c \"Voce c)\"\n  euro d \"Voce d)\"\n  euro e \"Voce e)\"\n  euro f \"Voce f)\"\n  euro g \"Voce g)\"\n  euro h \"Voce h)\"\n  euro i \"Voce i)\"\n  risultato euro soglia \"Soglia (25% delle voci b–i)\" = 25% * (b + c + d + e + f + g + h + i)\n  risultato euro margine \"Margine sulla voce a)\" = soglia - a\n  avviso \"Avviso atteso sulla voce a) Consulenza\" | \"Nessun avviso atteso\" : a > soglia\n\nfoglio \"Richiesta saldo\" \"SM-Partner saldo\"\n\nitem \"Importo richiesto a saldo\" RichSaldo_Soggetti.ImportoRichiesto\n  nota \"Agevolazione ricalcolata meno anticipo erogato, per ciascun regime. Anticipo assente = 0.\"\n  euro gberRicalcolato \"Gber ricalcolato\"\n  euro gberAnticipo \"Anticipo erogato Gber\"\n  euro demRicalcolato \"De minimis ricalcolato\"\n  euro demAnticipo \"Anticipo erogato De minimis\"\n  risultato euro gber \"di cui Gber\" = gberRicalcolato - gberAnticipo\n  risultato euro dem \"di cui De minimis\" = demRicalcolato - demAnticipo\n  risultato euro totale \"Importo richiesto\" = gber + dem\n";
+const STORE_KEY = 'rendi-economia-circolare-v1';
+
+let prog = null, curFoglio = 0;
+const state = {}; // key -> {values:{}, cmp:{}}
+
+function loadSource(){ try{ return localStorage.getItem(STORE_KEY) || ORIGINAL; }catch(e){ return ORIGINAL; } }
+function saveSource(s){ try{ if(s===ORIGINAL) localStorage.removeItem(STORE_KEY); else localStorage.setItem(STORE_KEY,s); }catch(e){} }
+
+const nf2 = new Intl.NumberFormat('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2});
+const nfFull = new Intl.NumberFormat('it-IT',{maximumFractionDigits:10});
+function fmt(v,ty){
+  if(typeof v!=='number'||!isFinite(v)) return '—';
+  const clean = Number(v.toPrecision(12));
+  if(ty==='euro') return nf2.format(clean)+' €';
+  if(ty==='perc') return nfFull.format(clean)+' %';
+  return nfFull.format(clean);
+}
+function parseIt(s){
+  s=String(s||'').trim().replace(/[\s€%]/g,'');
+  if(!s) return {n:null,dec:0};
+  if(s.includes(',')) s=s.replace(/\./g,'').replace(',','.');
+  else if(/^-?\d{1,3}(\.\d{3})+$/.test(s)) s=s.replace(/\./g,'');
+  if(!/^-?\d*\.?\d+$|^-?\d+\.?$/.test(s)) return {n:NaN,dec:0};
+  const dot=s.indexOf('.');
+  return {n:Number(s),dec:dot<0?0:s.length-dot-1};
+}
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function renderFogli(){
+  const box=document.getElementById('fogli');
+  box.innerHTML=prog.fogli.map((f,i)=>`<button role="tab" aria-selected="${i===curFoglio}" data-i="${i}"><b>${esc(f.name)}</b>${f.code?`<small>${esc(f.code)}</small>`:''}</button>`).join('');
+  box.querySelectorAll('button').forEach(b=>b.onclick=()=>{curFoglio=+b.dataset.i;renderFogli();renderItems();window.scrollTo({top:0});});
+  const sel=box.querySelector('[aria-selected="true"]'); if(sel) sel.scrollIntoView({inline:'center',block:'nearest'});
+}
+
+function renderItems(){
+  const f=prog.fogli[curFoglio]; const main=document.getElementById('items');
+  main.innerHTML='';
+  f.items.forEach((it,idx)=>{
+    const key=curFoglio+'|'+it.title+'|'+(it.code||'');
+    const st=state[key]||(state[key]={values:{},cmp:{}});
+    const d=document.createElement('details'); d.className='item'; d.name='item';
+    if(f.items.length===1) d.open=true;
+    const moneyInputs=it.inputs.filter(x=>x.kind!=='scelta');
+    const compact=moneyInputs.length>=6;
+    let h=`<summary><div><span class="t">${esc(it.title)}</span>${it.code?`<span class="c">${esc(it.code)}</span>`:''}</div><span class="chev" aria-hidden="true">›</span></summary><div class="body">`;
+    h+=it.notes.map(n=>`<p class="note">${esc(n)}</p>`).join('');
+    const fieldHtml=inp=>{
+      if(inp.kind==='scelta'){
+        const cur=st.values[inp.id]??inp.options[0];
+        return `<div class="field"><span>${esc(inp.label)}</span><div class="seg">${inp.options.map(o=>`<label><input type="radio" name="${esc(key+inp.id)}" data-id="${esc(inp.id)}" value="${esc(o)}" ${o===cur?'checked':''}><span>${esc(o)}</span></label>`).join('')}</div></div>`;
+      }
+      return `<label class="field"><span>${esc(inp.label)}</span><div class="money ${inp.kind==='numero'?'plain':''}"><input inputmode="decimal" autocomplete="off" placeholder="0,00" data-id="${esc(inp.id)}" value="${esc(st.values[inp.id]??'')}"></div></label>`;
+    };
+    h+=it.inputs.filter(x=>x.kind==='scelta').map(fieldHtml).join('');
+    h+=`<div class="${compact?'grid2':''}">${moneyInputs.map(fieldHtml).join('')}</div>`;
+    const results=it.steps.map((s,i)=>({s,i})).filter(x=>x.s.kind==='result');
+    const lastRes=results.length?results[results.length-1].i:-1;
+    h+=`<div class="slip">`;
+    it.steps.forEach((s,i)=>{
+      if(s.kind==='result') h+=`<div class="res ${i===lastRes?'main':''}"><div class="res-head"><span class="res-label">${esc(s.label)}</span><span class="res-val" data-out="${i}">—</span></div><div class="cmp"><input inputmode="decimal" autocomplete="off" placeholder="Valore in piattaforma" aria-label="Valore in piattaforma per ${esc(s.label)}" data-cmp="${i}" value="${esc(st.cmp[i]??'')}"><span class="stamp" data-stamp="${i}"></span></div></div>`;
+    });
+    h+=`</div>`;
+    it.steps.forEach((s,i)=>{ if(s.kind==='check'||s.kind==='warn') h+=`<div class="msg idle" data-out="${i}">Inserisci i valori per vedere l'esito</div>`; });
+    h+=`<div class="actions"><button class="link" data-clear>Svuota campi</button></div>`;
+    h+=`<details class="src"><summary>Definizione in Rendi</summary><pre>${esc(it.src.join('\n'))}</pre></details></div>`;
+    d.innerHTML=h;
+    main.appendChild(d);
+    const update=()=>compute(it,st,d);
+    d.querySelectorAll('input[data-id]').forEach(el=>{
+      const ev = el.type==='radio'?'change':'input';
+      el.addEventListener(ev,()=>{ st.values[el.dataset.id]=el.value; update(); });
+    });
+    d.querySelectorAll('input[data-cmp]').forEach(el=>el.addEventListener('input',()=>{ st.cmp[el.dataset.cmp]=el.value; update(); }));
+    d.querySelector('[data-clear]').onclick=()=>{ st.values={}; st.cmp={}; renderItems(); const again=document.querySelectorAll('details.item')[idx]; if(again) again.open=true; };
+    update();
+  });
+}
+
+function compute(it,st,d){
+  const vals={}; let touched=false, bad=false;
+  it.inputs.forEach(inp=>{
+    if(inp.kind==='scelta'){ vals[inp.id]=st.values[inp.id]??inp.options[0]; return; }
+    const p=parseIt(st.values[inp.id]);
+    const el=d.querySelector(`input[data-id="${CSS.escape(inp.id)}"]`);
+    if(el) el.classList.toggle('bad',Number.isNaN(p.n));
+    if(p.n!==null) touched=true;
+    if(Number.isNaN(p.n)) bad=true;
+    vals[inp.id]=p.n??0;
+  });
+  let out; try{ out=runItem(it,vals); }catch(e){ out=it.steps.map(()=>NaN); }
+  it.steps.forEach((s,i)=>{
+    if(s.kind==='result'){
+      const v=bad?NaN:out[i];
+      d.querySelector(`[data-out="${i}"]`).textContent=touched?fmt(v,s.ty):'—';
+      const stamp=d.querySelector(`[data-stamp="${i}"]`); const c=parseIt(st.cmp[i]);
+      stamp.className='stamp';
+      if(touched&&c.n!==null&&!Number.isNaN(c.n)&&isFinite(v)){
+        const tol=0.5*10**-c.dec+1e-9; const diff=v-c.n;
+        if(Math.abs(diff)<=tol){ stamp.classList.add('ok'); stamp.textContent='Coincide'; }
+        else { stamp.classList.add('ko'); stamp.textContent='Scarto '+fmt(Math.abs(diff),s.ty==='perc'?'numero':s.ty); }
+      }
+    } else if(s.kind==='check'||s.kind==='warn'){
+      const el=d.querySelector(`[data-out="${i}"]`);
+      if(!touched||bad){ el.className='msg idle'; el.textContent=bad?'Correggi i valori evidenziati':"Inserisci i valori per vedere l'esito"; return; }
+      const v=out[i];
+      if(s.kind==='check'){ el.className='msg '+(v?'ok':'ko'); el.textContent=v?s.ok:s.ko; }
+      else { el.className='msg '+(v?'warn':'idle'); el.textContent=v?s.yes:s.no; }
+    }
+  });
+}
+
+function applySource(src, fromEditor){
+  const {prog:p,errors}=parseProgram(src);
+  const status=document.getElementById('status');
+  if(errors.length){
+    status.className='status ko';
+    status.innerHTML=`<b>${errors.length===1?'1 errore':errors.length+' errori'}: l'app usa ancora l'ultima versione corretta.</b><ul>${errors.slice(0,8).map(e=>`<li>${e.line?`Riga <code>${e.line}</code>: `:''}${esc(e.msg)}</li>`).join('')}</ul>`;
+    return false;
+  }
+  prog=p; if(curFoglio>=prog.fogli.length) curFoglio=0;
+  const n=prog.fogli.reduce((a,f)=>a+f.items.length,0);
+  status.className='status ok'; status.textContent=`Nessun errore: ${prog.fogli.length} fogli, ${n} item.`;
+  document.getElementById('title').textContent=prog.title||'Verifica calcoli';
+  if(fromEditor) saveSource(src);
+  renderFogli(); renderItems();
+  return true;
+}
+
+const srcEl=document.getElementById('src');
+srcEl.value=loadSource();
+if(!applySource(srcEl.value,false)){ srcEl.value=ORIGINAL; applySource(ORIGINAL,false); }
+let tmr; srcEl.addEventListener('input',()=>{ clearTimeout(tmr); tmr=setTimeout(()=>applySource(srcEl.value,true),350); });
+document.getElementById('reset').onclick=()=>{ if(confirm('Ripristinare le definizioni originali? Le modifiche andranno perse.')){ srcEl.value=ORIGINAL; applySource(ORIGINAL,true); } };
+const modeBtn=document.getElementById('mode');
+modeBtn.onclick=()=>{
+  const ed=modeBtn.getAttribute('aria-pressed')!=='true';
+  modeBtn.setAttribute('aria-pressed',ed); modeBtn.textContent=ed?'Calcoli':'Definizioni';
+  document.getElementById('editor').hidden=!ed;
+  document.getElementById('items').hidden=ed;
+  document.querySelector('.fogli').hidden=ed;
+  window.scrollTo({top:0});
+};
+</script>
+<script>
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+</script>
+</body>
+</html>
